@@ -1,6 +1,64 @@
 BEST_ALPHA = "Not yet found"
 BEST_BETA = "Not yet found"
 
+
+CLUB_ID_MAP = {
+    "Arsenal": 13,
+    "Aston Villa": 24,
+    "Bournemouth": 183,
+    "Brentford": 189,
+    "Brighton": 211,
+    "Burnley": 184,
+    "Chelsea": 15,
+    "Crystal Palace": 162,
+    "Everton": 31,
+    "Fulham": 170,
+    "Ipswich": 165,
+    "Leeds": 19,
+    "Leicester": 14,
+    "Liverpool": 26,
+    "Luton": 95,
+    "Man City": 167,
+    "Man Utd": 32,
+    "Newcastle": 23,
+    "Nottingham Forest": 174,
+    "Sheff Utd": 163,
+    "Southampton": 18,
+    "Sunderland": 16,
+    "Tottenham": 30,
+    "West Ham": 29,
+    "Wolves": 161,
+}
+
+CLUB_NAME_RESOLVER = {
+    # "The-Odds-API Name": "Understat Name"
+    # Arsenal all good
+    "Villa": "Aston Villa",  # just in case
+    # Bournemouth all good
+    # Brentford all good
+    "Brighton and Hove Albion": "Brighton",
+    # Burnley all good
+    # Chelsea all good
+    # Crystal Palace all good
+    # Everton all good
+    # Fulham all good
+    "Leeds United": "Leeds",
+    # Liverpool all good
+    "Man City": "Manchester City",
+    "Man Utd": "Manchester United",
+    "Manchester Utd": "Manchester United",
+    "United": "Manchester United",
+    "Newcastle": "Newcastle United",
+    "Nottm Forest": "Nottingham Forest",
+    # Sunderland all good
+    "Spurs": "Tottenham",
+    "Tottenham Hotspur": "Tottenham",
+    "West Ham United": "West Ham",
+    "Wolves": "Wolverhampton Wanderers",
+    # ----- other teams -----
+    "Leicester City": "Leicester",  # To keep it robust for next season
+}
+
 STATE_TO_IDX = {
     "Z:0_P:H": 0,
     "Z:1_P:H": 1,

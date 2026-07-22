@@ -60,38 +60,6 @@ class EloModifier(FeatureStrategy):
         return df
 
 
-class HostAdvantageModifier(FeatureStrategy):
-    """
-    Applies a clean, mathematically rigorous Home Field Advantage (HFA) boost to tournament
-    host nations playing on home soil, operating on top of a neutral prior.
-    """
-
-    def apply(self, matrix: pd.DataFrame, ctx: dict) -> pd.DataFrame:
-        df = matrix.copy()
-
-        # check if the match really is a true home game for a host nation
-        host_nations = {"Canada", "Mexico", "USA"}
-        is_host_at_home = ctx.get("is_host_at_home", ctx["home_team"] in host_nations)
-        if not is_host_at_home:
-            return df
-        print(
-            f"[*] Host Nation active ({ctx['home_team']}). Applying explicit HFA boost..."
-        )
-
-        # define hardcoded HFA boost. in international football it typically adds between 6% and 8% transition intensity.
-        hfa_boost = ctx.get("hfa_boost_factor", 0.07)
-
-        # identify positive transitions for the home side
-        is_home_action = df["starting_state"].str.endswith("H")
-        is_progression = df["finishing_state"].str[2] > df["starting_state"].str[2]
-        is_scoring = df["finishing_state"].str.contains("Goal_H")
-
-        is_positive_home = is_home_action & (is_progression | is_scoring)
-
-        df.loc[is_positive_home, "updated_lambda_ij"] *= 1.0 + hfa_boost
-        return df
-
-
 class MatrixPipeline:
     """
     Orchestrates the Bayesian prior and passes it through an assembly line of modular strategies.
