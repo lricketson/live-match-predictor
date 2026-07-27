@@ -59,6 +59,21 @@ CLUB_NAME_RESOLVER = {
     "Leicester City": "Leicester",  # To keep it robust for next season
 }
 
+STATES = [
+    "Z:0_P:H",
+    "Z:1_P:H",
+    "Z:2_P:H",
+    "Z:3_P:H",
+    "Z:4_P:H",
+    "Z:0_P:A",
+    "Z:1_P:A",
+    "Z:2_P:A",
+    "Z:3_P:A",
+    "Z:4_P:A",
+    "Goal_H",
+    "Goal_A",
+]
+
 STATE_TO_IDX = {
     "Z:0_P:H": 0,
     "Z:1_P:H": 1,

@@ -2,12 +2,12 @@ import pandas as pd
 import numpy as np
 import json
 import os
-from constants import TEAM_ID_MAP, BEST_ALPHA, BEST_BETA
 
 
 def get_spatial_zone(x_val: float) -> str:
     """
-    Maps an Opta x-coordinate to one of the 5 spatial zones of the pitch. Caps edge cases to ensure a valid mapping.
+    Maps an Opta x-coordinate to one of the 5 spatial zones of the pitch.
+    Caps edge cases to ensure a valid mapping.
     """
     x_val = max(0.0, min(float(x_val), 100.0))
     if x_val < 17.0:
@@ -57,7 +57,12 @@ def apply_stoppage_cap(
     return 3.0 if time_delta > max_stoppage else time_delta
 
 
-def parse_match_to_dataframe(filepath):
+vectorised_stoppage_cap = np.vectorize(apply_stoppage_cap)
+
+
+def parse_match_to_dataframe(
+    filepath: str, current_season_year: int = 2026
+) -> pd.DataFrame:
 
     # open file and extract json
     with open(filepath, mode="r", encoding="utf-8") as f:
@@ -67,8 +72,18 @@ def parse_match_to_dataframe(filepath):
     home_id = match_data["home"]["teamId"]
     away_id = match_data["away"]["teamId"]
 
+    parent_folder = os.path.basename(os.path.dirname(filepath))
+
+    season_start_year = 2000 + int(parent_folder.split("_")[-2])
+
+    season_delta = 2026 - season_start_year
+
     # isolate the events array and load only that into Pandas
     events_list = match_data["events"]
+
+    if not events_list:
+        return pd.DataFrame()
+
     df = pd.DataFrame(events_list)
 
     # only take the rows where the ball was actually touched
@@ -132,12 +147,12 @@ def parse_match_to_dataframe(filepath):
     df.loc[is_goal & ~is_home & is_own_goal, "finishing_state"] = "Goal_H"
 
     # find time spent in the starting state (the difference between this event and the next)
-    time_deltas = df.index.to_series().diff().shift(-1)
+    raw_time_deltas = df.index.to_series().diff().shift(-1)
 
     # fill the very last event of the match (which has no next event) with the standard 2 seconds
-    time_deltas = time_deltas.fillna(2.0)
-    time_deltas = np.where(time_deltas < 0, 2.0, time_deltas)
-    df["time_spent_seconds"] = np.where(time_deltas > 15.0, 3.0, time_deltas)
+    raw_time_deltas = raw_time_deltas.fillna(2.0).values
+    df["time_spent_seconds"] = vectorised_stoppage_cap(raw_time_deltas)
+    df["season_delta"] = season_delta
 
     cols_to_keep = [
         "eventId",
@@ -147,6 +162,7 @@ def parse_match_to_dataframe(filepath):
         "starting_state",
         "finishing_state",
         "time_spent_seconds",
+        "season_delta",
     ]
 
     existing_cols = [c for c in cols_to_keep if c in df.columns]
