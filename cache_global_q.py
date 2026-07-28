@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from util import create_master_df, build_global_matrices
 from helpers import standardise_possessions
+import os
 
 # 1. Load all ~5700 Premier League matches (11/12 to 25/26)
 print("[*] Compiling 15-season master dataset...")
@@ -16,6 +17,8 @@ N_global, T_global, Q_global = build_global_matrices(master_df, gamma=0.05)
 
 # 3. Cache the exact mathematical components needed for the Bayesian conjugate update
 print("[*] Saving global priors to disk...")
+
+os.makedirs("cache", exist_ok=True)
 
 # Save the 12x12 Transition Counts (n_ij^global)
 pd.DataFrame(N_global).to_csv("cache/global_N_matrix.csv", index=False)

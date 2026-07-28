@@ -1,3 +1,4 @@
 /data
 /venv
 /unit_tests/__pycache__
+/cache

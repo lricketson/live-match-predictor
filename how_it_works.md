@@ -12,7 +12,7 @@ First of all, to reduce the data's dimensionality, we define a state space. For 
 To predict in-play matches, we will run Monte Carlo simulations on a transition matrix Q_active, which is formed from a weighted combination of three other transition matrices Q_pre, Q_KNN, and Q_live. The weights of each Q at a time t are governed by continuous exponential decay curves with a half-life of 45 minutes, to ensure smooth weight decay without harsh, unnatural step functions.
 
 - **Q_pre**: The prior Q matrix. To create this:
-- We first calculate two separate global Q matrices, Q_home and Q_away, which are formed from the aggregated totals of the state transition counts and holding times of all the matches in the 15-season database.
+- We first calculate a single global Q matrix which is formed from the aggregated totals of the state transition counts and holding times of all the matches in the 15-season database. We then extract the isolated rates for teams playing home vs away, which mathematically bakes in home advantage.
 - Then, if a team is playing at home, we take the global historical home n_ij and T_i values, scale them by a factor of alpha, and perform Bayesian conjugate updating to them using the club's specific n_ij and T_i values when also playing at home. The formula is
 
 lambda\_{ij, updated} = \frac{alpha \* n_ij^global + n_ij^club}{alpha \* T_i^global + T_i^club}

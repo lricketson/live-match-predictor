@@ -88,12 +88,12 @@ def build_global_matrices(
         return np.zeros((12, 12)), np.zeros((12, 1)), np.zeros((12, 12))
 
     weights = np.exp(-gamma * master_df["season_delta"].values)
-    master_df["decay_weights"] = weights
+    master_df["decay_weight"] = weights
     master_df["weighted_time"] = master_df["time_spent_seconds"] * weights
 
     # calculate the weighted numerator n_ij
     # put events with same starting and finishing states into buckets
-    # then sum up all the weights of those events (wehre older events have a lower weight)
+    # then sum up all the weights of those events (where older events have a lower weight)
     transition_counts = (
         master_df.groupby(["starting_state", "finishing_state"])["decay_weight"]
         .sum()
@@ -110,56 +110,101 @@ def build_global_matrices(
     q_matrix = pd.merge(transition_counts, time_spent, on="starting_state")
     q_matrix["lambda_ij"] = q_matrix["n_ij"] / q_matrix["T_i"]
 
-    n_grid = transition_counts.pivot(
-        index="starting_state", columns="finishing_state", values="n_ij"
-    ).reindex(index=STATES, columns=STATES, fill_value=0.0)
-
-    T_grid = time_spent.set_index("starting_state")["T_i"].reindex(
-        index=STATES, fill_value=0.0
+    n_grid = (
+        transition_counts.pivot(
+            index="starting_state", columns="finishing_state", values="n_ij"
+        )
+        .reindex(index=STATES, columns=STATES, fill_value=0.0)
+        .fillna(0.0)
     )
 
-    q_grid = q_matrix.pivot(
-        index="starting_state", columns="finishing_state", values="lambda_ij"
-    ).reindex(index=STATES, columns=STATES, fill_value=0.0)
+    T_grid = (
+        time_spent.set_index("starting_state")["T_i"]
+        .reindex(index=STATES, fill_value=0.0)
+        .fillna(0.0)
+    )
 
-    N_mat = n_grid.to_numpy(dtype=np.float64)
-    T_mat = T_grid.to_numpy(dtype=np.float64)
-    Q_mat = q_grid.to_numpy(dtype=np.float64)
+    q_grid = (
+        q_matrix.pivot(
+            index="starting_state", columns="finishing_state", values="lambda_ij"
+        )
+        .reindex(index=STATES, columns=STATES, fill_value=0.0)
+        .fillna(0.0)
+    )
+
+    N_mat = n_grid.to_numpy(dtype=np.float64, copy=True)
+    T_mat = T_grid.to_numpy(dtype=np.float64, copy=True).reshape(-1, 1)
+    Q_mat = q_grid.to_numpy(dtype=np.float64, copy=True)
 
     # ensure row validity (rows sum to 0)
-    for i in range(12):
+    for i in range(10):
         Q_mat[i, i] = 0  # zero out any accidental self-transition counts
-        Q_mat[i, i] = -np.sum(Q_mat[i, :])  # set diagonal to negative row sum
+        Q_mat[i, i] = -np.nansum(Q_mat[i, :])  # set diagonal to negative row sum
 
     return N_mat, T_mat, Q_mat
 
 
-def create_full_team_df(team_name, folder_path="./data/world_cup_2026"):
-    # switch from spaces to underscores for file names
+def create_full_team_df(team_name: str, folder_path: str = "./data") -> pd.DataFrame:
+    """
+    Creates a master dataframe of every single event performed by a specific team across all
+    historical seasons, strictly isolating their Home touches (P:H) and Away touches (P:A).
+    """
     search_name = team_name.replace(" ", "_")
 
-    # get all files
-    all_files = glob.glob(os.path.join(folder_path, "*.json"))
-
-    team_files = [f for f in all_files if search_name in os.path.basename(f)]
+    # 1. Scan across all nested season folders for any filename matching the team name
+    search_pattern = os.path.join(
+        folder_path, "premier_league_*", f"*{search_name}*.json"
+    )
+    team_files = sorted(glob.glob(search_pattern))
 
     if not team_files:
-        print(f"[-] No matches found for {team_name} in {folder_path}.")
+        print(f"[-] No matches found for '{team_name}' in {folder_path}.")
         return pd.DataFrame()
-    print(f"[*] Found {len(team_files)} matches for {team_name}. Parsing...")
 
-    # turn files to dfs
-    dfs_list = [safe_parse(file) for file in team_files]
-    valid_dfs = [df for df in dfs_list if not df.empty]
+    print(
+        f"[*] Found {len(team_files)} match files for '{team_name}'. Beginning parsing..."
+    )
+
+    valid_dfs = []
+
+    for i, file_path in enumerate(team_files, 1):
+        try:
+            df = parse_match_to_dataframe(file_path)
+            if df.empty:
+                continue
+
+            filename = os.path.basename(file_path)
+
+            # 2. THE GOLDEN RULE: Isolate the target club's actual touches!
+            # If team_name comes BEFORE '_vs_', they were the Home team -> keep P:H touches (Rows 0-4)
+            # If team_name comes AFTER '_vs_', they were the Away team -> keep P:A touches (Rows 5-9)
+            if f"_{search_name}_vs_" in filename or filename.startswith(
+                f"{search_name}_vs_"
+            ):
+                df_team = df[df["starting_state"].str.contains("_P:H")].copy()
+            else:
+                df_team = df[df["starting_state"].str.contains("_P:A")].copy()
+
+            if not df_team.empty:
+                valid_dfs.append(df_team)
+
+            print(
+                f"  [+] ({i}/{len(team_files)}) Filtered: {filename}\r",
+                end="",
+                flush=True,
+            )
+        except Exception as e:
+            print(f"\n  [-] Failed on {os.path.basename(file_path)}: {str(e)}")
 
     if not valid_dfs:
-        print(f"[-] All files for {team_name} failed to parse.")
+        print(f"\n[-] All files for '{team_name}' resulted in empty DataFrames.")
         return pd.DataFrame()
 
-    # concatenate
-    merged_df = pd.concat(valid_dfs)
+    print(f"\n[*] Concatenating events for '{team_name}'...")
+    merged_df = pd.concat(valid_dfs, ignore_index=True)
+
     print(
-        f"[+] Successfully built dataframe for {team_name} ({len(merged_df)} events)."
+        f"[+] Successfully built team DataFrame for '{team_name}' ({len(merged_df)} events)."
     )
     return merged_df
 
@@ -167,6 +212,12 @@ def create_full_team_df(team_name, folder_path="./data/world_cup_2026"):
 def calculate_specific_q(
     global_q: pd.DataFrame, alpha: float, team_data_df: pd.DataFrame
 ):
+    """
+    Takes the global Q matrix and performs Bayesian conjugate updating on the team lambdas, by multiplying
+    global n_ij and T_i values by a hyperparameter alpha and adding on the team-specific n_ij and T_i
+    values.
+    """
+
     team_data_clean = team_data_df.rename(columns={"n_ij": "team_n", "T_i": "team_T"})
     merged = pd.merge(
         left=global_q,

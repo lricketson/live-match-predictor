@@ -38,7 +38,7 @@ class BayesianDecayEngine:
 
     def compute_decay_weights(self, clock_seconds: float) -> Tuple[float, float, float]:
         """
-        Computes exponential decay weights for time progression w in [0,1], where w
+        Computes exponential decay weights for time progression w in [0, 1], where w
         is t/5400 (the fraction of the match that has so far been played).
         Guarantees the sum of all weights is 1.0 at all timestamps.
         """
