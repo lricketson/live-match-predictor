@@ -210,40 +210,50 @@ def create_full_team_df(team_name: str, folder_path: str = "./data") -> pd.DataF
 
 
 def calculate_specific_q(
-    global_q: pd.DataFrame, alpha: float, team_data_df: pd.DataFrame
-):
+    global_N: np.ndarray,
+    global_T: np.ndarray,
+    home_team_N: np.ndarray,
+    home_team_T: np.ndarray,
+    away_team_N: np.ndarray,
+    away_team_T: np.ndarray,
+    alpha: float,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
-    Takes the global Q matrix and performs Bayesian conjugate updating on the team lambdas, by multiplying
-    global n_ij and T_i values by a hyperparameter alpha and adding on the team-specific n_ij and T_i
-    values.
+    Performs real-time Bayesian conjugate updating in <1ms latency by blending global league
+    priors with specific club home/away baselines using hyperparameter alpha.
     """
+    # 1. Assemble the pre-match Counts (N_fixture) and Holding Times (T_fixture)
+    # initialise these arrays with zeros in the same shapes as global_N and global_T
+    N_fixture = np.zeros_like(global_N, dtype=np.float64)
+    T_fixture = np.zeros_like(global_T, dtype=np.float64)
 
-    team_data_clean = team_data_df.rename(columns={"n_ij": "team_n", "T_i": "team_T"})
-    merged = pd.merge(
-        left=global_q,
-        right=team_data_clean[
-            [
-                "starting_state",
-                "finishing_state",
-                "team_n",
-                "team_T",
-            ]
-        ],
-        on=["starting_state", "finishing_state"],
-        how="left",
-    )
+    # Extract Home team's attacking profile (Rows 0 to 4: P:H) and input those numbers into the arrays
+    # N_fixture is the array of counts for the fixture and contains both home and away counts
+    # same goes for T_fixture
+    N_fixture[0:5, :] = home_team_N[0:5, :]
+    T_fixture[0:5, :] = home_team_T[0:5, :]
 
-    merged["team_n"] = merged["team_n"].fillna(0)
-    merged["team_T"] = merged["team_T"].fillna(0)
+    # Extract Away team's attacking profile (Rows 5 to 9: P:A)
+    N_fixture[5:10, :] = away_team_N[5:10, :]
+    T_fixture[5:10, :] = away_team_T[5:10, :]
 
-    merged["updated_lambda_ij"] = (merged["n_ij"] * alpha + merged["team_n"]) / (
-        merged["T_i"] * alpha + merged["team_T"]
-    )
-    updated_q_matrix = merged[
-        ["starting_state", "finishing_state", "updated_lambda_ij"]
-    ].copy()
-    updated_q_grid = updated_q_matrix.pivot(
-        index="starting_state", columns="finishing_state", values="updated_lambda_ij"
-    ).fillna(0)
+    # 2. Apply Bayesian Conjugate Update against Global Prior using hyperparameter alpha:
+    # Formula: N_updated = (alpha * N_global) + N_fixture
+    N_updated = (alpha * global_N) + N_fixture
+    T_updated = (alpha * global_T) + T_fixture
 
-    return updated_q_matrix, updated_q_grid
+    # 3. Compute continuous-time transition rates (lambda_ij = N_ij / T_i)
+    Q_updated = np.zeros_like(N_updated, dtype=np.float64)
+
+    # only divide across transient states (indices 0 to 9)
+    # we ignore rows 10 and 11 because i represents the starting state, and we can't transition
+    # from a goal state to another state because goal states are absorbing
+    for i in range(10):
+        # to prevent division by zero errors:
+        if T_updated[i, 0] > 0:
+            Q_updated[i, :] = N_updated[i, :] / T_updated[i, 0]
+            # Zero out self-loop rates and set diagonal to negative row sum
+            Q_updated[i, i] = 0.0
+            Q_updated[i, i] = -np.sum(Q_updated[i, :])
+
+    return N_updated, T_updated, Q_updated

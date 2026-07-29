@@ -1,8 +1,12 @@
-# update this to loop through all clubs
+from constants import CLUB_ID_MAP
+from util import create_full_team_df, build_global_matrices
+import pandas as pd
 
-arsenal_df = create_full_team_df("Arsenal", folder_path="./data")
-N_arsenal, T_arsenal, Q_arsenal = build_global_matrices(arsenal_df, gamma=0.05)
+for club in CLUB_ID_MAP.keys():
 
-# Save to your cache folder
-pd.DataFrame(N_arsenal).to_csv("cache/arsenal_N_matrix.csv", index=False)
-pd.DataFrame(T_arsenal).to_csv("cache/arsenal_T_vector.csv", index=False)
+    club_df = create_full_team_df(f"{club}", folder_path="./data")
+    N_club, T_club, Q_club = build_global_matrices(club_df, gamma=0.05)
+
+    # Save to your cache folder
+    pd.DataFrame(N_club).to_csv(f"cache/{club}_N_matrix.csv", index=False)
+    pd.DataFrame(T_club).to_csv(f"cache/{club}_T_vector.csv", index=False)
