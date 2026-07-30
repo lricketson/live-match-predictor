@@ -1,8 +1,8 @@
 import unittest
 import torch
-from live_scraper import LiveEventScraper
-from constants import STATE_TO_IDX
-from vectoriser import TacticalVectoriser
+from src.engine.live_scraper import LiveEventScraper
+from config.constants import STATE_TO_IDX
+from src.engine.vectoriser import TacticalVectoriser
 
 
 class TestTacticalvectoriser(unittest.TestCase):

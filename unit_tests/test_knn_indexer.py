@@ -1,7 +1,7 @@
 import unittest
 import torch
 import time
-from knn_indexer import TacticalKNNIndexer
+from src.engine.knn_indexer import TacticalKNNIndexer
 
 
 class TestTacticalKNNIndexer(unittest.TestCase):

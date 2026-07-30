@@ -1,11 +1,8 @@
 import pandas as pd
 import os
 import glob
-from helpers import (
-    parse_match_to_dataframe,
-    safe_parse,
-)
-from constants import STATES
+from helpers import parse_match_to_dataframe
+from config.constants import STATES
 import numpy as np
 
 
@@ -257,3 +254,49 @@ def calculate_specific_q(
             Q_updated[i, i] = -np.sum(Q_updated[i, :])
 
     return N_updated, T_updated, Q_updated
+
+
+def align_team_perspective(team_df: pd.DataFrame, team_id: int, sim_role: str):
+    """
+    Forces all of a team's historical actions to align with a certain chosen role (home or away) for
+    the upcoming simulation. sim_role should be either "H" for home or "A" for away.
+    """
+
+    # isolate just the actions of the team in question
+    df = team_df[team_df["team_id"] == team_id].copy()
+
+    # define the opponent's role
+    opp_role = "A" if sim_role == "H" else "H"
+
+    start_poss = df["starting_state"].str[-1]
+    finish_poss = df["finishing_state"].str[-1]
+
+    is_turnover = start_poss != finish_poss
+    is_goal = df["finishing_state"].str.startswith("Goal")
+
+    zone_start = df["starting_state"].str.slice(0, 3)
+    df["starting_state"] = zone_start + f"_P:{sim_role}"
+
+    zone_finish = df["finishing_state"].str.slice(0, 3)
+    new_finish = np.where(
+        is_turnover, zone_finish + f"_P:{opp_role}", zone_finish + f"_P:{sim_role}"
+    )
+
+    new_finish = np.where(is_goal & ~is_turnover, f"Goal_{sim_role}", new_finish)
+    new_finish = np.where(is_goal & is_turnover, f"Goal_{opp_role}", new_finish)
+
+    df["finishing_state"] = new_finish
+
+    return df
+
+
+def standardise_possessions(df: pd.DataFrame) -> pd.DataFrame:
+    """Forces all 'Home' and 'Away' strings to 'H' and 'A' across the dataframe."""
+    df_clean = df.copy()
+    df_clean["starting_state"] = (
+        df_clean["starting_state"].str.replace("Home", "H").str.replace("Away", "A")
+    )
+    df_clean["finishing_state"] = (
+        df_clean["finishing_state"].str.replace("Home", "H").str.replace("Away", "A")
+    )
+    return df_clean

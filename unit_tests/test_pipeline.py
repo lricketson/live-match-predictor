@@ -1,9 +1,9 @@
 import torch
-from live_scraper import LiveEventScraper
-from vectoriser import TacticalVectoriser
-from knn_indexer import TacticalKNNIndexer
-from bayesian_decay import BayesianDecayEngine
-from live_simulator import run_live_pytorch_monte_carlo
+from src.engine.live_scraper import LiveEventScraper
+from src.engine.vectoriser import TacticalVectoriser
+from src.engine.knn_indexer import TacticalKNNIndexer
+from src.engine.bayesian_decay import BayesianDecayEngine
+from src.engine.live_simulator import run_live_pytorch_monte_carlo
 
 
 def run_pipeline_test():

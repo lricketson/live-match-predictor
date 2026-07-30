@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 from typing import Dict, List, Tuple
 from util import parse_match_to_dataframe
-from constants import STATE_TO_IDX, HOME_ATTACK_IDX, AWAY_ATTACK_IDX
+from config.constants import STATE_TO_IDX, HOME_ATTACK_IDX, AWAY_ATTACK_IDX
 
 HOME_STATES_IDX = [0, 1, 2, 3, 4]
 AWAY_STATES_IDX = [5, 6, 7, 8, 9]

@@ -6,7 +6,7 @@ from helpers import (
     resolve_goal_state,
     resolve_possession,
 )
-from constants import STATE_TO_IDX
+from config.constants import STATE_TO_IDX
 
 
 class LiveEventScraper:
@@ -104,7 +104,7 @@ class LiveEventScraper:
 
     def export_engine_payload(self) -> Dict[str, any]:
         """
-        Packages the active live state into a lightweight dictionary ready for the next stages. 
+        Packages the active live state into a lightweight dictionary ready for the next stages.
         All tensors remain in pinned CPU RAM ready for non-blocking GPU Direct Memory Access (DMA)
         transfer (.to(non_blocking=True)).
         """

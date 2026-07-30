@@ -1,6 +1,6 @@
 import torch
 from typing import Dict, Any, List, Tuple
-from constants import HOME_ATTACK_IDX, AWAY_ATTACK_IDX
+from config.constants import HOME_ATTACK_IDX, AWAY_ATTACK_IDX
 
 HOME_STATES_IDX = [0, 1, 2, 3, 4]
 AWAY_STATES_IDX = [5, 6, 7, 8, 9]

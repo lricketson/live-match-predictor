@@ -1,7 +1,7 @@
 import unittest
 import torch
 import time
-from bayesian_decay import BayesianDecayEngine
+from src.engine.bayesian_decay import BayesianDecayEngine
 
 
 class TestBayesianDecayEngine(unittest.TestCase):

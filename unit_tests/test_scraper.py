@@ -1,7 +1,7 @@
 import unittest
 import torch
-from live_scraper import LiveEventScraper
-from constants import STATE_TO_IDX
+from src.engine.live_scraper import LiveEventScraper
+from config.constants import STATE_TO_IDX
 from helpers import apply_stoppage_cap, resolve_goal_state, get_spatial_zone
 
 
