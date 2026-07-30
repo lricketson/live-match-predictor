@@ -2,3 +2,4 @@
 /venv
 /unit_tests/__pycache__
 /cache
+/compiled_db
