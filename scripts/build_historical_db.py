@@ -1,11 +1,10 @@
 import os
 import glob
-import json
 import torch
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Tuple
-from util import parse_match_to_dataframe
+from typing import List, Tuple
+from src.parsing.opta_parsing import parse_match_to_dataframe
 from config.constants import STATE_TO_IDX, HOME_ATTACK_IDX, AWAY_ATTACK_IDX
 
 HOME_STATES_IDX = [0, 1, 2, 3, 4]

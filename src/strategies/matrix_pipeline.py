@@ -1,4 +1,11 @@
 import pandas as pd
+from ctmc.ctmc_builder import (
+    standardise_possessions,
+    align_team_perspective,
+    create_full_team_df,
+    build_global_matrices,
+    calculate_specific_q,
+)
 
 
 class MatrixPipeline:
@@ -21,11 +28,11 @@ class MatrixPipeline:
         aligned_home_df = align_team_perspective(full_home_df, home_id, sim_role="H")
         aligned_away_df = align_team_perspective(full_away_df, away_id, sim_role="A")
 
-        home_counts, _ = calculate_global_q(aligned_home_df)
-        away_counts, _ = calculate_global_q(aligned_away_df)
+        home_N, home_T, _ = build_global_matrices(aligned_home_df)
+        away_N, away_T, _ = build_global_matrices(aligned_away_df)
 
         # Conjugate update uses the dynamic loop alpha
-        home_q_matrix, _ = calculate_specific_q(neutral_q, alpha, home_counts)
+        home_q_matrix, _ = calculate_specific_q(home_N, home_T, , alpha, home_counts)
         away_q_matrix, _ = calculate_specific_q(neutral_q, alpha, away_counts)
 
         home_attacking_rows = home_q_matrix[

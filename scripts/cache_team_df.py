@@ -1,5 +1,5 @@
 from config.constants import CLUB_ID_MAP
-from util import create_full_team_df, build_global_matrices
+from src.ctmc.ctmc_builder import create_full_team_df, build_global_matrices
 import pandas as pd
 
 for club in CLUB_ID_MAP.keys():
