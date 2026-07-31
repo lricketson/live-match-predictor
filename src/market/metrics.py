@@ -1,4 +1,5 @@
 import numpy as np
+from devig import devig_power_law
 
 
 def probability_to_odds(probability: float, vig_margin: float = 0.0) -> float:
@@ -25,12 +26,8 @@ def calculate_market_rmse(model_probs: list, bookie_odds: list):
     bookie_odds: [odds_h, odds_d, odds_a] (e.g. [2.50, 3.20, 2.70])
     """
     # de-vig the bookie odds to find true market probability
-    implied_probs = [1 / o for o in bookie_odds]
-    market_margin = sum(implied_probs)
-    # this assumes the vig was distributed uniformly, when in reality it often isn't.
-    # the vig's distribution is often skewed towards underdogs since bettors love to bet on underdogs
-    # hence this is a temporary simplification but it is an opportunity for improvement
-    true_market_probs = [ip / market_margin for ip in implied_probs]
+
+    true_market_probs = devig_power_law(bookie_odds)
 
     errors = [
         (model_probs[0] - true_market_probs[0]) ** 2,

@@ -14,3 +14,5 @@ do teams' historical performance data take into account the calibre of the team 
 - i can just copy over the scraper scripts from the gpu computer onto the epl scraper project
 
 - still going to use the same tri-modal bayesian inference model to predict results of in-play matches
+
+for 3-way markets, some sources say Shin's method is better and some say power law method is better, so i'll run A/B tests to see which does a better job.
