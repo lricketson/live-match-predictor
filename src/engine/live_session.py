@@ -16,7 +16,7 @@ from src.market.alpha_engine import AlphaEngine
 
 class LiveMatchPredictorSession:
     """
-    Persistent stateful session for an active live match.
+    Persistent stateful orchestration engine for an active live match.
     Pre-loads priors and 90 KNN VRAM/RAM slices once at initialization;
     ingests raw Opta events via LiveEventScraper and executes sub-20ms simulation ticks.
     """
@@ -36,24 +36,30 @@ class LiveMatchPredictorSession:
             raise ValueError(f"[-] Home team '{home_team}' not found in CLUB_ID_MAP.")
         if away_team not in CLUB_ID_MAP:
             raise ValueError(f"[-] Away team '{away_team}' not found in CLUB_ID_MAP.")
+
         self.home_team = home_team
         self.away_team = away_team
         self.home_id = CLUB_ID_MAP[home_team]
         self.away_id = CLUB_ID_MAP[away_team]
         self.db_dir = db_dir
+
         # 1. Instantiate persistent LiveEventScraper for real-time RAM state ledgers
         self.scraper = LiveEventScraper(
             home_team_id=self.home_id, away_team_id=self.away_id
         )
+
         # 2. Instant Load of Pre-Cached CSV Priors (<1ms)
         global_N = self._load_csv_matrix(
             os.path.join(cache_dir, "global_priors", "global_N_matrix.csv")
         )
+
         global_T = self._load_csv_matrix(
             os.path.join(cache_dir, "global_priors", "global_T_vector.csv")
         )
+
         h_clean = home_team.replace(" ", "_").lower()
         a_clean = away_team.replace(" ", "_").lower()
+
         home_N = self._load_csv_matrix(
             os.path.join(cache_dir, f"{h_clean}_N_matrix.csv")
         )
@@ -66,12 +72,16 @@ class LiveMatchPredictorSession:
         away_T = self._load_csv_matrix(
             os.path.join(cache_dir, f"{a_clean}_T_vector.csv")
         )
-        # 3. Compute Q_pre ONCE (<1ms)
+
+        # 3. Compute Q_pre ONCE (<1ms) via Bayesian conjugate updating
         _, _, Q_pre_np = calculate_specific_q(
             global_N, global_T, home_N, home_T, away_N, away_T, alpha
         )
+
+        # turn it into a PyTorch tensor
         self.Q_pre = torch.tensor(Q_pre_np, dtype=torch.float32)
-        # 4. Instantiate Persistent Engines
+
+        # 4. Instantiate Persistent Prediction and Market Engines
         self.decay_engine = BayesianDecayEngine(historical_baseline=self.Q_pre)
         self.vectoriser = TacticalVectoriser()
         self.alpha_engine = AlphaEngine(
@@ -107,6 +117,10 @@ class LiveMatchPredictorSession:
                 f"[-] Critical Error: No .pt slices found in '{self.db_dir}'."
             )
 
+    # ------------------------------------------------------------------------
+    #                         PUBLIC ENTRY POINTS
+    # ------------------------------------------------------------------------
+
     def process_opta_event(
         self,
         event_packet: Dict[str, Any],
@@ -116,6 +130,7 @@ class LiveMatchPredictorSession:
         """
         Ingests a single raw Opta streaming packet, updates LiveEventScraper, and if it's a valid touch event, executes
         a full prediction and alpha detection tick.
+        This method is used for a single Opta ball event, so it's probably the one I'll use in production.
         """
 
         # 1. update LiveEventScraper's real-time RAM ledgers (n_live, T_live, clock, scoreboard)
@@ -137,6 +152,9 @@ class LiveMatchPredictorSession:
     ) -> Optional[Dict[str, Any]]:
         """
         Ingests a batch/chunk of incoming raw Opta event packets via LiveEventScraper.
+        Since, in live matches, ball events will be coming in one by one, this is less likely to be used in
+        production. But running Monte Carlo simulations every 3-4 events instead of every single event will
+        save GPU computation.
         """
         state_updated = self.scraper.ingest_stream_chunk(event_packets)
         if not state_updated:
@@ -155,6 +173,8 @@ class LiveMatchPredictorSession:
     ) -> Dict[str, Any]:
         """
         Direct execution for pre-constructed payload dictionaries.
+        This method assumes the data is already coming in nicely parsed into a payload dictionary, so it
+        completely bypasses LiveEventScraper. This method can be used for backtesting, but not production.
         """
         if "lambda_live" not in payload:
             n_live = payload["n_live"]
@@ -162,3 +182,94 @@ class LiveMatchPredictorSession:
             payload["lambda_live"] = n_live / (T_live.unsqueeze(1) + 1e-6)
 
         return self._execute_prediction_tick(payload, bookie_odds, num_simulations)
+
+    def _execute_prediction_tick(
+        self, payload: Dict[str, Any], bookie_odds: List[float], num_simulations: int
+    ) -> Dict[str, Any]:
+        """
+        Executes the 6-stage predictive pipeline in under 20ms.
+        1. LiveEventScraper parses and packages live data into clean payload, and keeps an up-to-date
+            Q_live matrix by holding n_live and T_live in pinned RAM
+
+        2. TacticalVectoriser calculates v0, ... v4 and forms the 5D until-minute-t match vector,
+            then normalises it with historical mu and sigma values
+
+        3. TacticalKNNIndexer calculates k nearest neighbour match feature vectors with torch.cdist()
+            and aggregates minute-t-to-90 counts and holding times from the neighbours to create Q_KNN
+
+        4. BayesianDecayEngine calculates Q_active from a dynamically weighted sum of Q_pre, Q_KNN,
+            and Q_live
+
+        5. Q_active and the current scoreboard/timestamp/ball state are fed into run_live_pytorch_monte_carlo,
+           which calculates the current match outcome probabilities
+
+        6. The AlphaEngine devigs current bookmaker odds with the power law method, calculates market RMSE,
+           and flags +EV bet signals
+        """
+        t0 = time.time()
+        clock_sec = float(payload["clock_seconds"])
+        minute_bucket = max(1, min(90, int(round(clock_sec / 60.0))))
+
+        # step 1: update minute-bucket Z-score normalisation parameters
+        slice_path = os.path.join(self.db_dir, f"slice_min_{minute_bucket}.pt")
+        slice_data = torch.load(slice_path, weights_only=False)
+        self.vectoriser.set_normalisation_params(slice_data["mu"], slice_data["sigma"])
+
+        # step 2: vectorise 5D live state and call it z_live
+        z_live = self.vectoriser.vectorise(payload)
+
+        # step 3: GPU K-NN trajectory query -> Q_KNN
+        lambda_knn, _, _ = self.knn_indexer.get_pseudo_prior(
+            live_vector=z_live, clock_seconds=clock_sec
+        )
+
+        # step 4: tri-modal blending -> Q_active
+        Q_active = self.decay_engine.blend(
+            lambda_live=payload["lambda_live"],
+            T_live=payload["T_live"],
+            lambda_knn=lambda_knn,
+            clock_seconds=clock_sec,
+        )
+
+        # step 5: PyTorch GPU Monte Carlo simulation -> outcome probabilities
+        scoreboard = payload["scoreboard"]
+        home_g = int(scoreboard[0].item())
+        away_g = int(scoreboard[1].item())
+        active_state_idx = payload.get(
+            "active_ball_state_idx", payload.get("current_state_idx", 2)
+        )
+
+        prob_h, prob_d, prob_a = run_live_pytorch_monte_carlo(
+            q_matrix=Q_active,
+            current_clock=clock_sec,
+            current_state_idx=active_state_idx,
+            live_home_goals=home_g,
+            live_away_goals=away_g,
+            num_simulations=num_simulations,
+        )
+
+        # step 6: devigging and +EV arbitrage discovery
+        market_res = self.alpha_engine.evaluate(
+            clock_seconds=clock_sec,
+            model_probs=[prob_h, prob_d, prob_a],
+            bookie_odds=bookie_odds,
+        )
+
+        latency_ms = (time.time() - t0) * 1000.0
+
+        return {
+            "clock_seconds": clock_sec,
+            "minute": minute_bucket,
+            "score": f"{home_g}-{away_g}",
+            "home_goals": home_g,
+            "away_goals": away_g,
+            "probs": {"home": prob_h, "draw": prob_d, "away": prob_a},
+            "market_rmse": market_res["market_rmse"],
+            "signals": market_res["signals"],
+            "devigged_market_probs": market_res["devigged_market_probs"],
+            "latency_ms": latency_ms,
+        }
+
+    def reset(self):
+        """Resets the scraper for a new match."""
+        self.scraper.reset()
