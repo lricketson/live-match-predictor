@@ -1,5 +1,5 @@
 import numpy as np
-from devig import devig_power_law
+from src.market.devig import devig_power_law
 
 
 def probability_to_odds(probability: float, vig_margin: float = 0.0) -> float:

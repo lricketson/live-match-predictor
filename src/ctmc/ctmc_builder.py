@@ -78,7 +78,7 @@ def build_global_matrices(
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Takes a master DataFrame of all matches and returns rigid 12x12 NumPy matrices (N, T, Q) ready
-    for Bayesian conjugate updating.
+    for Bayesian conjugate updating. This takes into account season decay.
     """
 
     if master_df.empty:

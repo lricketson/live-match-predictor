@@ -63,7 +63,7 @@ class AlphaEngine:
                         round(p_model, 4),
                         round(p_market, 4),
                         round(ev * 100.0, 2),
-                        round(self.kelly_fraction * 100.0, 2),
+                        round(recommended_stake * 100.0, 2),
                     )
                 )
         return {

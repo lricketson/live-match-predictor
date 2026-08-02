@@ -25,7 +25,8 @@ def get_spatial_zone(x_val: float) -> str:
 
 def resolve_possession(team_id: int, home_id: int, outcome_val: int) -> str:
     """
-    Determines current possession ('H' or 'A'). If outcome_val == 0 (action was unsuccessful), then possession flips to the opposing team.
+    Determines current possession ('H' or 'A'). If outcome_val == 0 (action was unsuccessful),
+    then possession flips to the opposing team.
     """
     possession = "H" if team_id == home_id else "A"
     if outcome_val == 0:
@@ -37,7 +38,8 @@ def resolve_goal_state(
     is_goal: bool, is_own_goal: bool, is_home_team: bool
 ) -> str | None:
     """
-    Returns terminal absorbing states if a goal was scored, gracefully handling own goals. Returns None if the event was not a goal.
+    Returns terminal absorbing states if a goal was scored, gracefully handling own goals.
+    Returns None if the event was not a goal.
     """
     if not is_goal:
         return None
@@ -76,7 +78,7 @@ def parse_match_to_dataframe(
 
     season_start_year = 2000 + int(parent_folder.split("_")[-2])
 
-    season_delta = 2026 - season_start_year
+    season_delta = current_season_year - season_start_year
 
     # isolate the events array and load only that into Pandas
     events_list = match_data["events"]
