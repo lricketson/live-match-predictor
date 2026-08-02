@@ -1,5 +1,5 @@
 import numpy as np
-from base_strategy import FeatureStrategy
+from src.strategies.base_strategy import FeatureStrategy
 
 
 def _build_elo_direction_matrix() -> np.ndarray:

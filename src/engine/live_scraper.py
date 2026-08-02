@@ -1,12 +1,12 @@
 from typing import Dict, List
 import torch
-from helpers import (
+from config.constants import STATE_TO_IDX
+from src.parsing.opta_parsing import (
     apply_stoppage_cap,
     get_spatial_zone,
     resolve_goal_state,
     resolve_possession,
 )
-from config.constants import STATE_TO_IDX
 
 
 class LiveEventScraper:

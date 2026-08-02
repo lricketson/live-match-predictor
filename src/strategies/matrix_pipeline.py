@@ -1,4 +1,4 @@
-from ctmc.ctmc_builder import (
+from src.ctmc.ctmc_builder import (
     standardise_possessions,
     align_team_perspective,
     create_full_team_df,

@@ -105,3 +105,5 @@ STATE_TO_IDX = {
 
 HOME_ATTACK_IDX = [3, 4]  # Z:3_P:H and Z:4_P:H
 AWAY_ATTACK_IDX = [8, 9]  # Z:3_P:A and Z:4_P:A
+
+DEFAULT_ELO = 1500.0

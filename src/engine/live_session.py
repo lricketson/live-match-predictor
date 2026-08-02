@@ -4,7 +4,7 @@ import torch
 import pandas as pd
 import numpy as np
 from typing import List, Dict, Any, Optional
-from config.constants import CLUB_ID_MAP
+from config.constants import CLUB_ID_MAP, DEFAULT_ELO, BEST_ALPHA, BEST_BETA
 from src.ctmc.ctmc_builder import calculate_specific_q
 from src.engine.live_scraper import LiveEventScraper
 from src.engine.vectoriser import TacticalVectoriser
@@ -12,6 +12,9 @@ from src.engine.knn_indexer import TacticalKNNIndexer
 from src.engine.bayesian_decay import BayesianDecayEngine
 from src.engine.live_simulator import run_live_pytorch_monte_carlo
 from src.market.alpha_engine import AlphaEngine
+from helpers import get_club_elos
+from src.strategies.elo_strategy import EloModifier
+from src.strategies.matrix_pipeline import MatrixPipeline
 
 
 class LiveMatchPredictorSession:
@@ -27,7 +30,8 @@ class LiveMatchPredictorSession:
         away_team: str,
         cache_dir: str = "./cache/",
         db_dir: str = "./compiled_db/",
-        alpha: float = 50.0,
+        alpha: float = BEST_ALPHA,
+        beta: float = BEST_BETA,
         min_ev_threshold: float = 0.02,
         kelly_fraction: float = 0.25,
         k_neighbours: int = 50,
@@ -73,15 +77,27 @@ class LiveMatchPredictorSession:
             os.path.join(cache_dir, f"{a_clean}_T_vector.csv")
         )
 
-        # 3. Compute Q_pre ONCE (<1ms) via Bayesian conjugate updating
-        _, _, Q_pre_np = calculate_specific_q(
-            global_N, global_T, home_N, home_T, away_N, away_T, alpha
-        )
+        elos = get_club_elos(cache_dir=cache_dir)
 
+        # 3. Fetch up-to-date club Elo ratings
+        ctx = {
+            "home_team": home_team,
+            "away_team": away_team,
+            "elo_home": elos.get(home_team, DEFAULT_ELO),
+            "elo_away": elos.get(away_team, DEFAULT_ELO),
+            "alpha": alpha,
+            "beta": beta,
+        }
+
+        # 4. Compute Q_pre with MatrixPipeline (Bayesian conjugate updating + Elo scaling)
+        pipeline = MatrixPipeline(strategies=[EloModifier()])
+        Q_pre_np = pipeline.build_grid_fast(
+            global_N, global_T, home_N, home_T, away_N, away_T, ctx
+        )
         # turn it into a PyTorch tensor
         self.Q_pre = torch.tensor(Q_pre_np, dtype=torch.float32)
 
-        # 4. Instantiate Persistent Prediction and Market Engines
+        # 5. Instantiate Persistent Prediction and Market Engines
         self.decay_engine = BayesianDecayEngine(historical_baseline=self.Q_pre)
         self.vectoriser = TacticalVectoriser()
         self.alpha_engine = AlphaEngine(

@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 import glob
-from helpers import parse_match_to_dataframe
+from src.parsing.opta_parsing import parse_match_to_dataframe
 from config.constants import STATES
 import numpy as np
 
@@ -219,6 +219,7 @@ def calculate_specific_q(
     Performs real-time Bayesian conjugate updating in <1ms latency by blending global league
     priors with specific club home/away baselines using hyperparameter alpha.
     """
+
     # 1. Assemble the pre-match Counts (N_fixture) and Holding Times (T_fixture)
     # initialise these arrays with zeros in the same shapes as global_N and global_T
     N_fixture = np.zeros_like(global_N, dtype=np.float64)
