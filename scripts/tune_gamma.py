@@ -23,6 +23,9 @@ from tqdm import tqdm
 
 torch.set_num_threads(os.cpu_count())
 
+# Auto-detect GPU hardware acceleration
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 def evaluate_gamma_candidate(
     gamma: float,
@@ -107,7 +110,9 @@ def evaluate_gamma_candidate(
                     Q_pre_np = pipeline.build_grid_fast(
                         global_N, global_T, home_N, home_T, away_N, away_T, ctx
                     )
-                    Q_pre_tensor = torch.tensor(Q_pre_np, dtype=torch.float32)
+                    Q_pre_tensor = torch.tensor(
+                        Q_pre_np, dtype=torch.float32, device=device
+                    )
 
                     prob_h, prob_d, prob_a = run_live_pytorch_monte_carlo(
                         q_matrix=Q_pre_tensor,
