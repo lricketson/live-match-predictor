@@ -21,3 +21,9 @@ fine tune k
 add a red card modifier strategy
 
 investigate why laptop has 5570 matches and desktop has 5432
+
+current best hyperparams: (need to go further since gamma hit the wall)
+BEST GAMMA: 0.12
+BEST ALPHA: 0.015
+BEST BETA: 1e-05
+MINIMUM MARKET RMSE: 0.0966
