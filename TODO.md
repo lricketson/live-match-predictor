@@ -13,3 +13,9 @@ choose new default normalisation parameters in tacticalvectoriser
 investigate why there are only 5570 epl matches instead of 380 \* 15 = 5700
 
 run A/B tests to see which of shin's method and power law devigging does a better job.
+
+investigate why there are matches called 'home_vs_away.json', like match_1549627_Home_vs_Away.json
+
+use inverse square distance scaling in knn
+fine tune k
+add a red card modifier strategy

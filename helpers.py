@@ -114,11 +114,13 @@ def get_club_elos(
 
 def _fetch_from_url(url: str) -> Dict[str, float]:
     try:
-        # Pass standard browser User-Agent to prevent HTTP 403 Forbidden
+        # Full browser header simulation to prevent HTTP 403 Forbidden
         req = urllib.request.Request(
             url,
             headers={
-                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.5",
             },
         )
         with urllib.request.urlopen(req) as response:
@@ -133,7 +135,6 @@ def _fetch_from_url(url: str) -> Dict[str, float]:
                 canonical_name = CLUBELO_NAME_MAP[club_name]
                 elos[canonical_name] = float(row["Elo"])
 
-        # Default missing teams to 1500.0
         for team in CLUB_ID_MAP.keys():
             if team not in elos:
                 elos[team] = 1500.0
@@ -144,3 +145,9 @@ def _fetch_from_url(url: str) -> Dict[str, float]:
             f"[!] Warning: Could not fetch from {url} ({e}). Returning default 1500.0 ratings."
         )
         return {team: 1500.0 for team in CLUB_ID_MAP.keys()}
+
+
+def club_to_elo(club: str):
+    elos = get_club_elos()
+    club_elo = elos.get(club, "ERROR")
+    return club_elo

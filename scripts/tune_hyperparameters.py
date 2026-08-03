@@ -24,10 +24,15 @@ def evaluate_hyperparameter_pair(
     global_T: np.ndarray,
     cache_dir: str = "./cache/",
     num_simulations: int = 2000,
+    seed: int = 42,
 ) -> float:
     """
     Evaluates a specific (alpha, beta) pair using pre-loaded Elos and Global priors.
     """
+
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+
     rmse_scores = []
     pipeline = MatrixPipeline(strategies=[EloModifier()])
 

@@ -5,6 +5,9 @@ import pandas as pd
 for club in CLUB_ID_MAP.keys():
 
     club_df = create_full_team_df(f"{club}", folder_path="./data")
+
+    club_df.to_csv(f"cache/{club.replace(" ", "_").lower()}_events_df.csv", index=False)
+
     N_club, T_club, Q_club = build_global_matrices(club_df, gamma=0.05)
 
     # Save to your cache folder
