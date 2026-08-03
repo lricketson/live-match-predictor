@@ -19,3 +19,5 @@ investigate why there are matches called 'home_vs_away.json', like match_1549627
 use inverse square distance scaling in knn
 fine tune k
 add a red card modifier strategy
+
+investigate why laptop has 5570 matches and desktop has 5432

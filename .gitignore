@@ -3,3 +3,5 @@
 /unit_tests/__pycache__
 /cache
 /compiled_db
+__pycache__/
+*.pyc
