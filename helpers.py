@@ -1,6 +1,6 @@
 import pandas as pd
 from config.constants import CLUB_ID_MAP
-from typing import Any, Dict
+from typing import Dict
 import os
 import time
 import json

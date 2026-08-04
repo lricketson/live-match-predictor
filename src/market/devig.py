@@ -1,6 +1,6 @@
 import numpy as np
 from scipy.optimize import root_scalar
-from typing import List, Tuple, Dict
+from typing import List
 
 
 def devig_multiplicative(odds: List[float]) -> List[float]:

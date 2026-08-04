@@ -5,7 +5,6 @@ import pandas as pd
 import numpy as np
 from typing import List, Dict, Any, Optional
 from config.constants import CLUB_ID_MAP, DEFAULT_ELO, BEST_ALPHA, BEST_BETA
-from src.ctmc.ctmc_builder import calculate_specific_q
 from src.engine.live_scraper import LiveEventScraper
 from src.engine.vectoriser import TacticalVectoriser
 from src.engine.knn_indexer import TacticalKNNIndexer

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict, List, Optional
+from typing import Dict, List
 from src.market.devig import devig_power_law
 from src.market.metrics import calculate_market_rmse
 

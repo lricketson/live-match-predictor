@@ -143,8 +143,12 @@ def run_gamma_tuning(num_simulations: int = 2000):
     print("==================================================================")
 
     # 1. Fetch Elos and load raw match DataFrames ONCE
-    print("[*] Fetching up-to-date ClubElo ratings...")
-    elos = get_club_elos(cache_dir="./cache/")
+    match_date = "2026-04-23"
+    print(
+        f"[*] Fetching historical ClubElo ratings for validation date ({match_date})..."
+    )
+    elos = get_club_elos(match_date=match_date, cache_dir="./cache/")
+    print(f"[+] Loaded {len(elos)} historical team Elo ratings for {match_date}.")
 
     print("[*] Pre-loading historical raw match DataFrames...")
     master_df = pd.read_parquet("./cache/master_df.parquet")
@@ -184,9 +188,9 @@ def run_gamma_tuning(num_simulations: int = 2000):
             "bookie_odds": [2.56, 3.61, 3.03],
         },
         {
-            "home_team": "Wolves",
-            "away_team": "Tottenham",
-            "bookie_odds": [5.10, 4.70, 1.71],
+            "home_team": "Fulham",
+            "away_team": "Aston Villa",
+            "bookie_odds": [2.70, 3.81, 2.95],
         },
         {
             "home_team": "Man Utd",
@@ -194,16 +198,16 @@ def run_gamma_tuning(num_simulations: int = 2000):
             "bookie_odds": [2.05, 3.94, 3.93],
         },
         {
-            "home_team": "Aston Villa",
+            "home_team": "Wolves",
             "away_team": "Tottenham",
-            "bookie_odds": [2.35, 3.81, 3.17],
+            "bookie_odds": [5.10, 4.70, 1.71],
         },
     ]
 
     # 3. Candidate Grids
-    gamma_candidates = [0.05, 0.06, 0.07, 0.08, 0.09, 0.1, 0.11, 0.12]
-    alpha_candidates = [0.005, 0.01, 0.015, 0.02, 0.025, 0.03, 0.035, 0.04]
-    beta_candidates = [0.00001, 0.00005, 0.00010, 0.00015, 0.00020, 0.00025, 0.00030]
+    gamma_candidates = [0.25, 0.27, 0.29, 0.31, 0.33]
+    alpha_candidates = [0.0001, 0.0025, 0.005, 0.0075, 0.01, 0.0125, 0.015]
+    beta_candidates = [1e-6, 3e-6, 6e-6, 9e-6, 1e-5, 3e-5, 6e-5, 9e-5]
 
     overall_best_rmse = float("inf")
     overall_best_gamma = None

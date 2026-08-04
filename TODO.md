@@ -1,14 +1,4 @@
-change paths from /world_cup to /data
-
-replace team_id_map with club_id_map and club elos
-
-    - find if there is a reliable measure for club power ratings
-
-add an entity resolution dictionary for clubs with &, -, etc. in their names
-
 re-run hyperparameters tuning logic
-
-choose new default normalisation parameters in tacticalvectoriser
 
 investigate why there are only 5570 epl matches instead of 380 \* 15 = 5700
 
@@ -22,8 +12,47 @@ add a red card modifier strategy
 
 investigate why laptop has 5570 matches and desktop has 5432
 
+NOTE FOR THESE 2 RESULTS THAT I WAS MISTAKENLY USING PRESENT DAY ELOS FOR APR 2026 PREM MATCHES
+
 current best hyperparams: (need to go further since gamma hit the wall)
 BEST GAMMA: 0.12
 BEST ALPHA: 0.015
 BEST BETA: 1e-05
 MINIMUM MARKET RMSE: 0.0966
+
+r2: must take gamma even further
+
+==================================================================
+BEST GAMMA: 0.24
+BEST ALPHA: 0.01
+BEST BETA: 1e-05
+MINIMUM MARKET RMSE: 0.0922
+==================================================================
+
+now with correct, at the time elo ratings:
+
+==================================================================
+BEST GAMMA: 0.27
+BEST ALPHA: 0.005
+BEST BETA: 1e-05
+MINIMUM MARKET RMSE: 0.0915
+==================================================================
+
+we have found the ceiling for gamma:
+
+---
+
+[1/5] Gamma: 0.25 --> Best RMSE: 0.0917 (Alpha: 0.01, Beta: 1e-06)  
+[2/5] Gamma: 0.27 --> Best RMSE: 0.0915 (Alpha: 0.005, Beta: 1e-06)  
+[3/5] Gamma: 0.29 --> Best RMSE: 0.0931 (Alpha: 0.0025, Beta: 1e-06)  
+[4/5] Gamma: 0.31 --> Best RMSE: 0.0937 (Alpha: 0.01, Beta: 1e-06)  
+[5/5] Gamma: 0.33 --> Best RMSE: 0.0956 (Alpha: 0.005, Beta: 1e-06)
+
+==================================================================
+GAMMA TUNING COMPLETE: OVERALL OPTIMAL TRIPLET FOUND  
+==================================================================
+BEST GAMMA: 0.27
+BEST ALPHA: 0.005
+BEST BETA: 1e-06
+MINIMUM MARKET RMSE: 0.0915
+==================================================================

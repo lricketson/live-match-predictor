@@ -48,22 +48,28 @@ CLUB_NAME_RESOLVER = {
     # "The-Odds-API Name": "Understat Name"
     # Arsenal all good
     "Villa": "Aston Villa",  # just in case
-    # Bournemouth all good
+    "AFC Bournemouth": "Bournemouth",
     # Brentford all good
     "Brighton and Hove Albion": "Brighton",
     # Burnley all good
     # Chelsea all good
+    "Coventry City": "Coventry",
     # Crystal Palace all good
     # Everton all good
     # Fulham all good
+    "Hull City": "Hull",
+    "Ipswich Town": "Ipswich",
     "Leeds United": "Leeds",
     # Liverpool all good
-    "Man City": "Manchester City",
-    "Man Utd": "Manchester United",
-    "Manchester Utd": "Manchester United",
-    "United": "Manchester United",
-    "Newcastle": "Newcastle United",
+    "Manchester City": "Man City",
+    "Manchester United": "Man Utd",
+    "Manchester Utd": "Man Utd",
+    "United": "Man Utd",
+    "Newcastle United": "Newcastle",
     "Nottm Forest": "Nottingham Forest",
+    "Forest": "Nottingham Forest",
+    "Sheffield United": "Sheff Utd",
+    "Sheffield Utd": "Sheff Utd",
     # Sunderland all good
     "Spurs": "Tottenham",
     "Tottenham Hotspur": "Tottenham",
