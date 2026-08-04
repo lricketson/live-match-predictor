@@ -1,6 +1,6 @@
-BEST_ALPHA = "Not yet found"
-BEST_BETA = "Not yet found"
-BEST_GAMMA = 0.05
+BEST_ALPHA = 0.0075
+BEST_BETA = 1e-9
+BEST_GAMMA = 0.255
 
 
 CLUB_ID_MAP = {

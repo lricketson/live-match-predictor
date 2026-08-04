@@ -82,8 +82,8 @@ class LiveMatchPredictorSession:
         ctx = {
             "home_team": home_team,
             "away_team": away_team,
-            "elo_home": elos.get(home_team, DEFAULT_ELO),
-            "elo_away": elos.get(away_team, DEFAULT_ELO),
+            "elo_home": float(elos.get(home_team, DEFAULT_ELO)),
+            "elo_away": float(elos.get(away_team, DEFAULT_ELO)),
             "alpha": alpha,
             "beta": beta,
         }

@@ -12,6 +12,10 @@ add a red card modifier strategy
 
 investigate why laptop has 5570 matches and desktop has 5432
 
+create main.py to easily launch the engine and get really familiar with what i need to do when a match is starting
+
+think about using react instead of streamlit for the frontend
+
 NOTE FOR THESE 2 RESULTS THAT I WAS MISTAKENLY USING PRESENT DAY ELOS FOR APR 2026 PREM MATCHES
 
 current best hyperparams: (need to go further since gamma hit the wall)
@@ -55,4 +59,13 @@ BEST GAMMA: 0.27
 BEST ALPHA: 0.005
 BEST BETA: 1e-06
 MINIMUM MARKET RMSE: 0.0915
+==================================================================
+
+## FINAL HYPERPARAMS
+
+==================================================================
+BEST GAMMA: 0.255
+BEST ALPHA: 0.0075
+BEST BETA: 1e-09
+MINIMUM MARKET RMSE: 0.0914
 ==================================================================

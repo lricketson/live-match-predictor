@@ -56,8 +56,8 @@ class EloModifier(FeatureStrategy):
 
     def apply(self, Q: np.ndarray, ctx: dict) -> np.ndarray:
 
-        elo_home = ctx["elo_home"]
-        elo_away = ctx["elo_away"]
+        elo_home = float(ctx["elo_home"])
+        elo_away = float(ctx["elo_away"])
         beta = ctx.get("beta", 0.001)  # Default scaling hyperparameter
 
         elo_diff = elo_home - elo_away

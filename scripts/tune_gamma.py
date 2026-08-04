@@ -205,9 +205,9 @@ def run_gamma_tuning(num_simulations: int = 2000):
     ]
 
     # 3. Candidate Grids
-    gamma_candidates = [0.25, 0.27, 0.29, 0.31, 0.33]
-    alpha_candidates = [0.0001, 0.0025, 0.005, 0.0075, 0.01, 0.0125, 0.015]
-    beta_candidates = [1e-6, 3e-6, 6e-6, 9e-6, 1e-5, 3e-5, 6e-5, 9e-5]
+    gamma_candidates = [0.25, 0.255, 0.26, 0.265, 0.27, 0.275, 0.28, 0.285]
+    alpha_candidates = [0.0015, 0.003, 0.005, 0.0075, 0.01, 0.0125, 0.015]
+    beta_candidates = [1e-9, 5e-9, 1e-8, 5e-8, 1e-7, 5e-7, 1e-6]
 
     overall_best_rmse = float("inf")
     overall_best_gamma = None
