@@ -69,3 +69,5 @@ BEST ALPHA: 0.0075
 BEST BETA: 1e-09
 MINIMUM MARKET RMSE: 0.0914
 ==================================================================
+
+Since I likely won't be able to get a truly live Opta feed, here is what we'll do. If the live Opta feed is delayed by n seconds, we will run our model alongside the match and calculate alpha based on n-seconds-ago bookie odds. This will not make me money but it will still allow me to paper trade and make PnL graphs.
